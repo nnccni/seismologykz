@@ -20,6 +20,81 @@
       font-weight: 600;
     }
   </style>
+  <style>
+  body { background: #fff; }
+
+  .public-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .public-container {
+      padding: 10px;
+    }
+  }
+
+  #map {
+    width: 100%;
+    height: 450px;
+  }
+
+  @media (max-width: 768px) {
+    #map {
+      height: 300px;
+    }
+  }
+
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .filters select,
+  .filters button {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  @media (max-width: 768px) {
+    .filters {
+      flex-direction: column;
+    }
+
+    .filters select,
+    .filters button {
+      width: 100%;
+    }
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .data-table th,
+    .data-table td {
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+  }
+</style>
+
 </head>
 
 <body>
