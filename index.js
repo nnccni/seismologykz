@@ -11,16 +11,30 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cookieSession({
-  name: "session",
-  keys: ["supersecretkey123"],
-  maxAge: 24 * 60 * 60 * 1000
-}));
+// -------------------------
+// Cookie session (iframe + HTTPS fix)
+// -------------------------
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["supersecretkey123"],
+    maxAge: 24 * 60 * 60 * 1000,
+    secure: true,       // обязательно для HTTPS (Railway)
+    sameSite: "none"    // обязательно для iframe
+  })
+);
 
+// -------------------------
+// Static files
+// -------------------------
 app.use(express.static(path.join(__dirname, "public")));
 
+// -------------------------
+// File paths
+// -------------------------
 const dataFile = path.join(__dirname, "data", "earthquakes.json");
 const logFile = path.join(__dirname, "data", "logs.json");
+const usersFile = path.join(__dirname, "data", "users.json");
 
 // -------------------------
 // JSON helpers
@@ -39,6 +53,10 @@ function readLogs() {
 
 function writeLogs(data) {
   fs.writeFileSync(logFile, JSON.stringify(data, null, 2));
+}
+
+function readUsers() {
+  return JSON.parse(fs.readFileSync(usersFile));
 }
 
 function addLog(action, details) {
@@ -63,18 +81,33 @@ function checkAuth(req, res, next) {
 }
 
 // -------------------------
+// Allow login.html without auth
+// -------------------------
+app.get("/login.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+// -------------------------
 // Auth routes
 // -------------------------
 app.post("/auth", (req, res) => {
   const { login, password } = req.body;
+  const users = readUsers();
 
-  if (login === "admin" && password === "12345") {
-    req.session.loggedIn = true;
-    addLog("login", { user: login });
-    return res.redirect("/list.html");
+  const user = users.find(
+    (u) => u.login === login && u.password === password
+  );
+
+  if (!user) {
+    return res.redirect("/login.html?error=1");
   }
 
-  res.redirect("/login.html?error=1");
+  req.session.loggedIn = true;
+  req.session.user = user;
+
+  addLog("login", { user: login });
+
+  res.redirect("/list.html");
 });
 
 app.get("/logout", (req, res) => {
@@ -90,7 +123,7 @@ app.get("/api/earthquakes", checkAuth, (req, res) => {
 });
 
 app.post("/api/add", checkAuth, (req, res) => {
-  const { date, time, lat, lon, magnitude } = req.body;
+  const { date, time, lat, lon, magnitude, comment } = req.body;
   const data = readData();
 
   const record = {
@@ -99,7 +132,8 @@ app.post("/api/add", checkAuth, (req, res) => {
     time,
     lat: parseFloat(lat),
     lon: parseFloat(lon),
-    magnitude: parseFloat(magnitude)
+    magnitude: parseFloat(magnitude),
+    comment: comment || ""
   };
 
   data.push(record);
@@ -112,10 +146,10 @@ app.post("/api/add", checkAuth, (req, res) => {
 
 app.post("/api/update/:id", checkAuth, (req, res) => {
   const id = Number(req.params.id);
-  const { date, time, lat, lon, magnitude } = req.body;
+  const { date, time, lat, lon, magnitude, comment } = req.body;
 
   const data = readData();
-  const index = data.findIndex(r => r.id === id);
+  const index = data.findIndex((r) => r.id === id);
 
   if (index !== -1) {
     data[index] = {
@@ -124,7 +158,8 @@ app.post("/api/update/:id", checkAuth, (req, res) => {
       time,
       lat: parseFloat(lat),
       lon: parseFloat(lon),
-      magnitude: parseFloat(magnitude)
+      magnitude: parseFloat(magnitude),
+      comment: comment || ""
     };
 
     writeData(data);
@@ -138,7 +173,7 @@ app.get("/api/delete/:id", checkAuth, (req, res) => {
   const id = Number(req.params.id);
   let data = readData();
 
-  data = data.filter(r => r.id !== id);
+  data = data.filter((r) => r.id !== id);
   writeData(data);
 
   addLog("delete", { id });
@@ -159,27 +194,32 @@ app.get("/api/logs", checkAuth, (req, res) => {
 app.get("/api/export", checkAuth, (req, res) => {
   const data = readData();
 
-  let csv = "ID,Дата,Время,Широта,Долгота,Магнитуда\n";
+  let csv = "ID,Дата,Время,Широта,Долгота,Магнитуда,Комментарий\n";
 
-  data.forEach(r => {
-    csv += `${r.id},${r.date},${r.time},${r.lat},${r.lon},${r.magnitude}\n`;
+  data.forEach((r) => {
+    csv += `${r.id},${r.date},${r.time},${r.lat},${r.lon},${r.magnitude},"${(r.comment || "").replace(/"/g, '""')}"\n`;
   });
 
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", "attachment; filename=earthquakes.csv");
+  res.setHeader(
+    "Content-Disposition",
+    "attachment; filename=earthquakes.csv"
+  );
 
   res.send("\uFEFF" + csv);
 });
 
 // -------------------------
-// Root redirect
+// Root route
 // -------------------------
-app.get("/", checkAuth, (req, res) => {
-  res.redirect("/list.html");
+app.get("/", (req, res) => {
+  res.redirect("/login.html");
 });
 
 // -------------------------
 // Start server
 // -------------------------
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("Server running on port", port));
+app.listen(port, () =>
+  console.log("Server running on port", port)
+);
