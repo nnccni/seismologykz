@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Вход</h2>
+
+<form onsubmit="login(event)">
+  <input name="login" placeholder="Логин" required><br>
+  <input name="password" type="password" placeholder="Пароль" required><br>
+  <button>Войти</button>
+</form>
+
+<script>
+async function login(e) {
+  e.preventDefault();
+
+  const form = new FormData(e.target);
+
+  const res = await fetch("/auth", {
+    method: "POST",
+    body: form
+  });
+
+  const json = await res.json();
+
+  if (json.ok) {
+    localStorage.setItem("token", json.token);
+    window.location.href = "/list.html";
+  } else {
+    alert("Ошибка");
+  }
+}
+</script>
+
+</body>
+</html>
