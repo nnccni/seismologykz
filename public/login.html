@@ -14,11 +14,13 @@
 async function login(e) {
   e.preventDefault();
 
-  const form = new FormData(e.target);
+  const login = e.target.login.value;
+  const password = e.target.password.value;
 
   const res = await fetch("/auth", {
     method: "POST",
-    body: form
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ login, password })
   });
 
   const json = await res.json();
@@ -31,6 +33,7 @@ async function login(e) {
   }
 }
 </script>
+
 
 </body>
 </html>
