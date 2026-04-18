@@ -5,19 +5,21 @@ function renderMap(data) {
 
   data.forEach(r => {
     if (r.lat && r.lon) {
-      L.circleMarker([r.lat, r.lon], {
+      L.circleMarker([Number(r.lat), Number(r.lon)], {
         radius: 8,
         color: "red",
         fillColor: "red",
         fillOpacity: 0.8
-      }).addTo(map).bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}`);
+      })
+      .addTo(map)
+      .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}`);
     }
   });
 }
 
 function renderTable(data) {
   const table = document.getElementById("events");
-  table.innerHTML = `
+  let html = `
     <tr>
       <th>Дата</th>
       <th>Время</th>
@@ -27,7 +29,7 @@ function renderTable(data) {
     </tr>
   `;
   data.forEach(r => {
-    table.innerHTML += `
+    html += `
       <tr>
         <td>${r.date || ""}</td>
         <td>${r.time || ""}</td>
@@ -37,12 +39,13 @@ function renderTable(data) {
       </tr>
     `;
   });
+  table.innerHTML = html;
 }
 
-fetch("https://seismologykz.up.railway.app/api/earthquakes")
+fetch("/api/earthquakes")
   .then(r => r.json())
   .then(json => {
-    renderMap(json.data);
-    renderTable(json.data);
+    renderMap(json);
+    renderTable(json);
   })
   .catch(err => console.error("Ошибка загрузки данных:", err));
