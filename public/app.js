@@ -1,3 +1,8 @@
+// проверка токена при загрузке кабинета
+if (!localStorage.getItem("token")) {
+  window.location.href = "/";
+}
+
 let map;
 let markersLayer;
 
@@ -86,10 +91,8 @@ document.getElementById("eventForm").addEventListener("submit", async e => {
     body: JSON.stringify(record)
   });
 
-  // сброс формы и установка дефолтных значений
   document.getElementById("eventForm").reset();
   setDefaultDateTime();
-
   loadData();
 });
 
