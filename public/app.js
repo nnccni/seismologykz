@@ -1,6 +1,7 @@
 let map;
 let markersLayer;
 
+// Инициализация карты
 function initMap() {
   map = L.map("map").setView([43.25, 76.9], 5);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -10,6 +11,7 @@ function initMap() {
   markersLayer = L.layerGroup().addTo(map);
 }
 
+// Обновление карты
 function updateMap(data) {
   markersLayer.clearLayers();
   data.forEach(r => {
@@ -29,6 +31,7 @@ function updateMap(data) {
   });
 }
 
+// Отрисовка таблицы
 function renderTable(data) {
   const tbody = document.getElementById("table-body");
   tbody.innerHTML = "";
@@ -41,12 +44,13 @@ function renderTable(data) {
       <td>${r.lon}</td>
       <td>${r.magnitude}</td>
       <td>${r.comment || ""}</td>
-      <td><a href="/api/delete/${r.id}" class="link-danger">Удалить</a></td>
+      <td><a href="#" onclick="deleteEvent(${r.id})" class="link-danger">Удалить</a></td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+// Загрузка данных
 async function loadData() {
   const res = await fetch("/api/earthquakes");
   const json = await res.json();
@@ -54,7 +58,66 @@ async function loadData() {
   updateMap(json.data);
 }
 
+// Установка текущей даты и времени
 function setCurrentDateTime() {
   const now = new Date();
   document.getElementById("date").value = now.toISOString().split("T")[0];
-  document.getElementById("time").value = now.toTimeString().slice(0,
+  document.getElementById("time").value = now.toTimeString().slice(0,5);
+}
+
+// Сохранение события
+document.getElementById("addForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const record = {
+    date: document.getElementById("date").value,
+    time: document.getElementById("time").value,
+    lat: parseFloat(document.getElementById("lat").value),
+    lon: parseFloat(document.getElementById("lon").value),
+    magnitude: parseFloat(document.getElementById("magnitude").value),
+    comment: document.getElementById("comment").value
+  };
+
+  const res = await fetch("/api/add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    },
+    body: JSON.stringify(record)
+  });
+  const json = await res.json();
+  if (json.ok) {
+    loadData();
+  } else {
+    alert("Ошибка сохранения. Возможно, нет авторизации.");
+    window.location.href = "/";
+  }
+});
+
+// Удаление события
+async function deleteEvent(id) {
+  const res = await fetch(`/api/delete/${id}`, {
+    method: "GET",
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("token")
+    }
+  });
+  const json = await res.json();
+  if (json.ok) {
+    loadData();
+  } else {
+    alert("Ошибка удаления. Возможно, нет авторизации.");
+    window.location.href = "/";
+  }
+}
+
+// При загрузке страницы
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!localStorage.getItem("token")) {
+    window.location.href = "/";
+    return;
+  }
+  initMap();
+  setCurrentDateTime();
+  await loadData();
+});
