@@ -76,9 +76,18 @@ app.get("/api/delete/:id", auth, (req, res) => {
   res.json({ ok: true });
 });
 
-// корневой маршрут — кабинет оператора
+// корневой маршрут — проверка авторизации
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "list.html"));
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.sendFile(path.join(__dirname, "public", "login.html"));
+  }
+  try {
+    jwt.verify(token, SECRET);
+    return res.sendFile(path.join(__dirname, "public", "list.html"));
+  } catch {
+    return res.sendFile(path.join(__dirname, "public", "login.html"));
+  }
 });
 
 // публичная часть
