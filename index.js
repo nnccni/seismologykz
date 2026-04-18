@@ -57,9 +57,16 @@ app.post("/auth", (req, res) => {
   }
 });
 
-// кабинет всегда отдаётся по корню
+// кабинет — только после авторизации
 app.get("/", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "list.html"));
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.sendFile(path.join(process.cwd(), "public", "login.html"));
+  try {
+    jwt.verify(token, SECRET);
+    res.sendFile(path.join(process.cwd(), "public", "list.html"));
+  } catch {
+    res.sendFile(path.join(process.cwd(), "public", "login.html"));
+  }
 });
 
 // публичная часть
