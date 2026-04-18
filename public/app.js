@@ -1,3 +1,8 @@
+function setDefaultDateTime() {
+  document.getElementById("date").value = new Date().toISOString().split("T")[0];
+  document.getElementById("time").value = new Date().toTimeString().slice(0,5);
+}
+
 function renderMap(data) {
   const map = L.map("map").setView([43.25, 76.9], 5);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
@@ -89,5 +94,5 @@ async function deleteEvent(id) {
   loadData();
 }
 
-// загрузка при открытии
+setDefaultDateTime();
 loadData();
