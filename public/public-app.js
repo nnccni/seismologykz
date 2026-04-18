@@ -1,54 +1,62 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f6f9;
-  margin: 0;
-  padding: 0;
+let map;
+let markersLayer;
+
+function initMap() {
+  map = L.map("map").setView([43.25, 76.9], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
 }
 
-h1 {
-  background-color: #003366;
-  color: white;
-  padding: 15px;
-  margin: 0;
+function renderMap(data) {
+  markersLayer.clearLayers();
+  data.forEach(r => {
+    if (r.lat && r.lon) {
+      L.circleMarker([Number(r.lat), Number(r.lon)], {
+        radius: 8,
+        color: "blue",
+        fillColor: "blue",
+        fillOpacity: 0.7
+      })
+      .addTo(markersLayer)
+      .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}<br>${r.comment || ""}`);
+    }
+  });
 }
 
-form {
-  margin: 20px;
-  padding: 10px;
-  background: #e9eef5;
-  border-radius: 5px;
+function renderTable(data) {
+  const table = document.getElementById("events");
+  let html = `
+    <tr>
+      <th>Дата</th>
+      <th>Время</th>
+      <th>Широта</th>
+      <th>Долгота</th>
+      <th>Магнитуда</th>
+      <th>Комментарий</th>
+    </tr>
+  `;
+  data.forEach(r => {
+    html += `
+      <tr>
+        <td>${r.date || ""}</td>
+        <td>${r.time || ""}</td>
+        <td>${r.lat || ""}</td>
+        <td>${r.lon || ""}</td>
+        <td>${r.magnitude || ""}</td>
+        <td>${r.comment || ""}</td>
+      </tr>
+    `;
+  });
+  table.innerHTML = html;
 }
 
-label {
-  margin-right: 10px;
+async function loadData() {
+  const res = await fetch("/api/earthquakes");
+  const data = await res.json();
+  renderMap(data);
+  renderTable(data);
 }
 
-button {
-  background-color: #009999;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #007777;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin: 20px;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: center;
-}
-
-th {
-  background-color: #003366;
-  color: white;
-}
+// инициализация
+initMap();
+loadData();
