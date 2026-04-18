@@ -59,7 +59,9 @@ app.get("/public", (req, res) => res.sendFile("public/public.html", { root: proc
 
 // получить все события
 app.get("/api/earthquakes", async (req, res) => {
-  const result = await pool.query("SELECT * FROM earthquakes ORDER BY id DESC");
+  const result = await pool.query(
+    "SELECT * FROM earthquakes ORDER BY date DESC, time DESC"
+  );
   res.json(result.rows);
 });
 
