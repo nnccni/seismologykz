@@ -1,12 +1,19 @@
+let map;
+let markersLayer;
+
+function initMap() {
+  map = L.map("map").setView([43.25, 76.9], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
+
 function setDefaultDateTime() {
   document.getElementById("date").value = new Date().toISOString().split("T")[0];
   document.getElementById("time").value = new Date().toTimeString().slice(0,5);
 }
 
 function renderMap(data) {
-  const map = L.map("map").setView([43.25, 76.9], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-
+  markersLayer.clearLayers(); // очистка старых маркеров
   data.forEach(r => {
     if (r.lat && r.lon) {
       L.circleMarker([Number(r.lat), Number(r.lon)], {
@@ -15,7 +22,7 @@ function renderMap(data) {
         fillColor: "red",
         fillOpacity: 0.8
       })
-      .addTo(map)
+      .addTo(markersLayer)
       .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}<br>${r.comment || ""}`);
     }
   });
@@ -79,7 +86,7 @@ document.getElementById("eventForm").addEventListener("submit", async e => {
     body: JSON.stringify(record)
   });
 
-  loadData();
+  loadData(); // обновляем интерфейс сразу
 });
 
 async function deleteEvent(id) {
@@ -91,8 +98,10 @@ async function deleteEvent(id) {
     },
     body: JSON.stringify({ id })
   });
-  loadData();
+  loadData(); // обновляем интерфейс сразу
 }
 
+// инициализация
+initMap();
 setDefaultDateTime();
 loadData();
