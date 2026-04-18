@@ -15,13 +15,22 @@ function initMap() {
 function updateMap(data) {
   markersLayer.clearLayers();
   data.forEach(r => {
-    if (r.lat && r.lon) {
-      const color = r.magnitude >= 4 ? "red" : r.magnitude >= 3 ? "orange" : "yellow";
+    if (!isNaN(r.lat) && !isNaN(r.lon)) {
+      let fillColor, borderColor;
+      if (r.magnitude >= 4) {
+        fillColor = "red"; borderColor = "darkred";
+      } else if (r.magnitude >= 3) {
+        fillColor = "orange"; borderColor = "darkorange";
+      } else {
+        fillColor = "#FFD700"; borderColor = "black"; // яркий жёлтый с чёрной рамкой
+      }
+
       L.circleMarker([r.lat, r.lon], {
-        radius: 8,
-        color,
-        fillColor: color,
-        fillOpacity: 0.8
+        radius: 10,
+        color: borderColor,
+        fillColor: fillColor,
+        fillOpacity: 0.9,
+        weight: 2
       }).addTo(markersLayer).bindPopup(`
         <b>${r.date} ${r.time}</b><br/>
         M: ${r.magnitude}<br/>
@@ -30,6 +39,7 @@ function updateMap(data) {
     }
   });
 }
+
 
 // Отрисовка таблицы
 function renderTable(data) {
