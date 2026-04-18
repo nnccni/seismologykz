@@ -49,7 +49,7 @@ function auth(req, res, next) {
 app.post("/auth", (req, res) => {
   const { username, password } = req.body;
   // простая проверка (можно заменить на базу)
-  if (username === "admin" && password === "admin123") {
+  if (username === "admin" && password === "12345") {
     const token = jwt.sign({ user: username }, SECRET, { expiresIn: "1h" });
     res.json({ ok: true, token });
   } else {
