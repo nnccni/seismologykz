@@ -12,7 +12,7 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
 
   if (json.ok) {
     localStorage.setItem("token", json.token);
-    window.location.href = "/"; // кабинет открывается по корню
+    window.location.href = "/"; // кабинет доступен по корню
   } else {
     alert("Неверный логин или пароль");
   }
