@@ -85,3 +85,14 @@ th, td {
 tr:nth-child(even) {
   background: #f9f9f9;
 }
+.public-wrapper {
+  max-width: 1200px;   /* ширина блока как у основного контента */
+  margin: 0 auto;
+  padding: 20px 0;
+}
+
+.public-wrapper #map {
+  height: 700px;       /* увеличенная высота */
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
