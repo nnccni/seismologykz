@@ -17,28 +17,34 @@ h1, h2 {
   margin: 10px 0;
 }
 
+/* контейнер для формы и карты */
 .top {
   display: flex;
   justify-content: space-between;
+  gap: 20px;
   padding: 20px;
-  height: 400px;
+  align-items: flex-start;
 }
 
+/* форма */
 .form {
-  width: 45%;
-  padding: 15px;
+  flex: 1;
+  max-width: 400px;
   background: #fff;
+  padding: 20px;
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+/* карта */
 #map {
-  width: 45%;
-  height: 400px;
+  flex: 2;
+  min-height: 400px;
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+/* кнопки */
 button {
   background: #00a6a6; /* фирменный бирюзовый */
   color: #fff;
@@ -52,6 +58,7 @@ button:hover {
   background: #008080;
 }
 
+/* таблица */
 .bottom {
   margin-top: 20px;
   padding: 20px;
@@ -76,11 +83,13 @@ th, td {
 tr:nth-child(even) {
   background: #f9f9f9;
 }
+
+/* форма авторизации по центру */
 main {
   display: flex;
-  justify-content: center; /* по горизонтали */
-  align-items: center;     /* по вертикали */
-  height: calc(100vh - 80px); /* высота экрана минус шапка */
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 80px); /* минус высота хедера */
 }
 
 #loginForm {
