@@ -1,144 +1,21 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="kk">
 <head>
-  <meta charset="UTF-8" />
-  <title>Сейсмические события</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <style>
-    body { background: #fff; }
-    .public-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1 {
-      font-size: 26px;
-      margin-bottom: 20px;
-      font-weight: 600;
-    }
-  </style>
-  <style>
-  body { background: #fff; }
-
-  .public-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-
-  @media (max-width: 768px) {
-    .public-container {
-      padding: 10px;
-    }
-  }
-
-  #map {
-    width: 100%;
-    height: 450px;
-  }
-
-  @media (max-width: 768px) {
-    #map {
-      height: 300px;
-    }
-  }
-
-  .filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .filters select,
-  .filters button {
-    padding: 8px;
-    font-size: 14px;
-  }
-
-  @media (max-width: 768px) {
-    .filters {
-      flex-direction: column;
-    }
-
-    .filters select,
-    .filters button {
-      width: 100%;
-    }
-  }
-
-  .table-wrapper {
-    overflow-x: auto;
-  }
-
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #e5e7eb;
-    white-space: nowrap;
-  }
-
-  @media (max-width: 768px) {
-    .data-table th,
-    .data-table td {
-      padding: 6px 8px;
-      font-size: 13px;
-    }
-  }
-</style>
-
+  <meta charset="UTF-8">
+  <title>Сейсмикалық оқиғалар</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
-
 <body>
-  <div class="public-container">
-
-    <h1>Сейсмические события</h1>
-
-    <div class="filters">
-      <select id="range">
-        <option value="">Все события</option>
-        <option value="24h">Последние 24 часа</option>
-        <option value="7d">Последние 7 дней</option>
-        <option value="30d">Последние 30 дней</option>
-      </select>
-
-      <select id="minMag">
-        <option value="">Все магнитуды</option>
-        <option value="2">M ≥ 2</option>
-        <option value="3">M ≥ 3</option>
-        <option value="4">M ≥ 4</option>
-        <option value="5">M ≥ 5</option>
-      </select>
-
-      <button class="btn" onclick="applyFilters()">Фильтровать</button>
-    </div>
-
-    <div id="map" style="height: 450px; margin-bottom: 20px;"></div>
-
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Дата</th>
-          <th>Время</th>
-          <th>M</th>
-          <th>Широта</th>
-          <th>Долгота</th>
-          <th>Комментарий</th>
-        </tr>
-      </thead>
-      <tbody id="table-body"></tbody>
-    </table>
-
-  </div>
-
-  <script src="public-app.js"></script>
+  <header>
+    <h1>Сейсмологиялық оқиғалар</h1>
+  </header>
+  <main>
+    <div id="map"></div>
+    <table id="events"></table>
+  </main>
+  <script src="app-public.js"></script>
 </body>
 </html>
+  
