@@ -1,243 +1,85 @@
 import express from "express";
 import fs from "fs";
 import path from "path";
-import cookieSession from "cookie-session";
+import cors from "cors";
+import jwt from "jsonwebtoken";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const SECRET = "supersecretjwtkey123";
+
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// -------------------------
-// Cookie session (iframe + HTTPS fix)
-// -------------------------
-app.use(
-  cookieSession({
-    name: "session",
-    keys: ["supersecretkey123"],
-    maxAge: 24 * 60 * 60 * 1000,
-    secure: true,       // обязательно для HTTPS (Railway)
-    sameSite: "none"    // обязательно для iframe (Тильда)
-  })
-);
-
-// -------------------------
-// Static files
-// -------------------------
 app.use(express.static(path.join(__dirname, "public")));
 
-// -------------------------
-// File paths
-// -------------------------
 const dataFile = path.join(__dirname, "data", "earthquakes.json");
 const logFile = path.join(__dirname, "data", "logs.json");
 const usersFile = path.join(__dirname, "data", "users.json");
 
-// -------------------------
-// JSON helpers
-// -------------------------
-function readData() {
-  return JSON.parse(fs.readFileSync(dataFile));
+function ensure(file, def) {
+  if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(def, null, 2));
 }
 
-function writeData(data) {
-  fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
-}
+ensure(dataFile, []);
+ensure(logFile, []);
+ensure(usersFile, [
+  { login: "admin", password: "12345" },
+  { login: "operator", password: "op123" }
+]);
 
-function readLogs() {
-  return JSON.parse(fs.readFileSync(logFile));
-}
+const read = f => JSON.parse(fs.readFileSync(f));
+const write = (f, d) => fs.writeFileSync(f, JSON.stringify(d, null, 2));
 
-function writeLogs(data) {
-  fs.writeFileSync(logFile, JSON.stringify(data, null, 2));
-}
+function auth(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ ok: false });
 
-function readUsers() {
-  return JSON.parse(fs.readFileSync(usersFile));
-}
-
-function addLog(action, details) {
-  const logs = readLogs();
-  logs.push({
-    id: Date.now(),
-    time: new Date().toISOString(),
-    action,
-    details
-  });
-  writeLogs(logs);
-}
-
-// -------------------------
-// Auth middleware
-// -------------------------
-function checkAuth(req, res, next) {
-  if (!req.session.loggedIn) {
-    return res.redirect("/login.html");
+  try {
+    req.user = jwt.verify(token, SECRET);
+    next();
+  } catch {
+    res.status(401).json({ ok: false });
   }
-  next();
 }
 
-// -------------------------
-// Allow login.html without auth
-// -------------------------
-app.get("/login.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
-
-// -------------------------
-// Auth routes
-// -------------------------
 app.post("/auth", (req, res) => {
   const { login, password } = req.body;
-  const users = readUsers();
+  const users = read(usersFile);
 
-  const user = users.find(
-    (u) => u.login === login && u.password === password
-  );
+  const user = users.find(u => u.login === login && u.password === password);
+  if (!user) return res.json({ ok: false });
 
-  if (!user) {
-    return res.redirect("/login.html?error=1");
-  }
-
-  req.session.loggedIn = true;
-  req.session.user = user;
-
-  addLog("login", { user: login });
-
-  res.redirect("/list.html");
+  const token = jwt.sign({ login }, SECRET, { expiresIn: "7d" });
+  res.json({ ok: true, token });
 });
 
-app.get("/logout", (req, res) => {
-  req.session = null;
-  res.redirect("/login.html");
+app.get("/api/earthquakes", (req, res) => {
+  res.json({ ok: true, data: read(dataFile) });
 });
 
-// -------------------------
-// PRIVATE API (operator)
-// -------------------------
-app.get("/api/earthquakes", checkAuth, (req, res) => {
-  let data = readData();
-  const now = Date.now();
-
-  // Date range filter
-  const range = req.query.range;
-  if (range === "24h") data = data.filter(r => now - r.id <= 24 * 60 * 60 * 1000);
-  if (range === "7d")  data = data.filter(r => now - r.id <= 7 * 24 * 60 * 60 * 1000);
-  if (range === "30d") data = data.filter(r => now - r.id <= 30 * 24 * 60 * 60 * 1000);
-
-  // Magnitude filter
-  const minMag = parseFloat(req.query.minMag);
-  if (!isNaN(minMag)) {
-    data = data.filter(r => r.magnitude >= minMag);
-  }
-
-  // Sort newest first
-  data = data.sort((a, b) => b.id - a.id);
-
-  res.json(data);
-});
-
-// ADD
-app.post("/api/add", checkAuth, (req, res) => {
-  const { date, time, lat, lon, magnitude, comment } = req.body;
-  const data = readData();
-
-  const record = {
-    id: Date.now(),
-    date,
-    time,
-    lat: parseFloat(lat),
-    lon: parseFloat(lon),
-    magnitude: parseFloat(magnitude),
-    comment: comment || ""
-  };
-
+app.post("/api/add", auth, (req, res) => {
+  const data = read(dataFile);
+  const record = { id: Date.now(), ...req.body };
   data.push(record);
-  writeData(data);
-
-  addLog("add", record);
-
-  res.redirect("/list.html");
+  write(dataFile, data);
+  res.json({ ok: true, record });
 });
 
-// UPDATE
-app.post("/api/update/:id", checkAuth, (req, res) => {
-  const id = Number(req.params.id);
-  const { date, time, lat, lon, magnitude, comment } = req.body;
-
-  const data = readData();
-  const index = data.findIndex((r) => r.id === id);
-
-  if (index !== -1) {
-    data[index] = {
-      id,
-      date,
-      time,
-      lat: parseFloat(lat),
-      lon: parseFloat(lon),
-      magnitude: parseFloat(magnitude),
-      comment: comment || ""
-    };
-
-    writeData(data);
-    addLog("update", data[index]);
-  }
-
-  res.redirect("/list.html");
+app.get("/api/delete/:id", auth, (req, res) => {
+  let data = read(dataFile);
+  data = data.filter(r => r.id != req.params.id);
+  write(dataFile, data);
+  res.json({ ok: true });
 });
 
-// DELETE
-app.get("/api/delete/:id", checkAuth, (req, res) => {
-  const id = Number(req.params.id);
-  let data = readData();
-
-  data = data.filter(r => r.id !== id);
-  writeData(data);
-
-  addLog("delete", { id });
-
-  res.redirect("/list.html");
+// маршрут для публичной страницы
+app.get("/public", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "public.html"));
 });
 
-// -------------------------
-// PUBLIC API (no auth)
-// -------------------------
-app.get("/api/earthquakes-public", (req, res) => {
-  let data = readData();
-  const now = Date.now();
-
-  // Date range filter
-  const range = req.query.range;
-  if (range === "24h") data = data.filter(r => now - r.id <= 24 * 60 * 60 * 1000);
-  if (range === "7d")  data = data.filter(r => now - r.id <= 7 * 24 * 60 * 60 * 1000);
-  if (range === "30d") data = data.filter(r => now - r.id <= 30 * 24 * 60 * 60 * 1000);
-
-  // Magnitude filter
-  const minMag = parseFloat(req.query.minMag);
-  if (!isNaN(minMag)) {
-    data = data.filter(r => r.magnitude >= minMag);
-  }
-
-  // Sort newest first
-  data = data.sort((a, b) => b.id - a.id);
-
-  res.json(data);
-});
-
-// -------------------------
-// Root route
-// -------------------------
-app.get("/", (req, res) => {
-  res.redirect("/login.html");
-});
-
-// -------------------------
-// Start server
-// -------------------------
 const port = process.env.PORT || 3000;
-app.listen(port, () =>
-  console.log("Server running on port", port)
-);
+app.listen(port, () => console.log("Running on", port));
