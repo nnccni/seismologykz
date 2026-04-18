@@ -1,103 +1,71 @@
-let map;
-let markersLayer;
+function renderMap(data) {
+  const map = L.map("map").setView([43.25, 76.9], 5);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
-// Инициализация карты
-function initMap() {
-  map = L.map("map");
-
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: "&copy; OpenStreetMap"
-  }).addTo(map);
-
-  markersLayer = L.layerGroup().addTo(map);
-
-  // границы Казахстана
-  const kazakhstanBounds = [
-    [40.0, 55.0], // юго-запад
-    [55.0, 87.0]  // северо-восток
-  ];
-  map.fitBounds(kazakhstanBounds);
-}
-
-
-// Обновление карты
-function updateMap(data) {
-  markersLayer.clearLayers();
   data.forEach(r => {
-    if (!isNaN(r.lat) && !isNaN(r.lon)) {
-      let fillColor, borderColor;
-      if (r.magnitude >= 4) {
-        fillColor = "red"; borderColor = "darkred";
-      } else if (r.magnitude >= 3) {
-        fillColor = "orange"; borderColor = "darkorange";
-      } else {
-        fillColor = "#FFD700"; borderColor = "black"; // яркий жёлтый с чёрной рамкой
-      }
-
-      L.circleMarker([r.lat, r.lon], {
-        radius: 10,
-        color: borderColor,
-        fillColor: fillColor,
-        fillOpacity: 0.9,
-        weight: 2
-      }).addTo(markersLayer).bindPopup(`
-        <b>${r.date} ${r.time}</b><br/>
-        M: ${r.magnitude}<br/>
-        ${r.comment || ""}
-      `);
+    if (r.lat && r.lon) {
+      L.circleMarker([Number(r.lat), Number(r.lon)], {
+        radius: 8,
+        color: "red",
+        fillColor: "red",
+        fillOpacity: 0.8
+      })
+      .addTo(map)
+      .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}<br>${r.comment || ""}`);
     }
   });
 }
 
-
-// Отрисовка таблицы
 function renderTable(data) {
-  const tbody = document.getElementById("table-body");
-  tbody.innerHTML = "";
+  const table = document.getElementById("events");
+  let html = `
+    <tr>
+      <th>Дата</th>
+      <th>Время</th>
+      <th>Широта</th>
+      <th>Долгота</th>
+      <th>Магнитуда</th>
+      <th>Комментарий</th>
+      <th>Удалить</th>
+    </tr>
+  `;
   data.forEach(r => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${r.date}</td>
-      <td>${r.time}</td>
-      <td>${r.lat}</td>
-      <td>${r.lon}</td>
-      <td>${r.magnitude}</td>
-      <td>${r.comment || ""}</td>
-      <td><a href="#" onclick="deleteEvent(${r.id})" class="link-danger">Удалить</a></td>
+    html += `
+      <tr>
+        <td>${r.date || ""}</td>
+        <td>${r.time || ""}</td>
+        <td>${r.lat || ""}</td>
+        <td>${r.lon || ""}</td>
+        <td>${r.magnitude || ""}</td>
+        <td>${r.comment || ""}</td>
+        <td><button onclick="deleteEvent(${r.id})">X</button></td>
+      </tr>
     `;
-    tbody.appendChild(tr);
   });
+  table.innerHTML = html;
 }
 
-// Загрузка данных
 async function loadData() {
-  const res = await fetch("/api/earthquakes");
-  const json = await res.json();
-  renderTable(json.data);
-  updateMap(json.data);
+  const res = await fetch("/api/earthquakes", {
+    headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+  });
+  const data = await res.json();
+  renderMap(data);
+  renderTable(data);
 }
 
-// Установка текущей даты и времени
-function setCurrentDateTime() {
-  const now = new Date();
-  document.getElementById("date").value = now.toISOString().split("T")[0];
-  document.getElementById("time").value = now.toTimeString().slice(0,5);
-}
-
-// Сохранение события
-document.getElementById("addForm").addEventListener("submit", async e => {
+document.getElementById("eventForm").addEventListener("submit", async e => {
   e.preventDefault();
   const record = {
     date: document.getElementById("date").value,
     time: document.getElementById("time").value,
-    lat: parseFloat(document.getElementById("lat").value),
-    lon: parseFloat(document.getElementById("lon").value),
-    magnitude: parseFloat(document.getElementById("magnitude").value),
+    lat: document.getElementById("lat").value,
+    lon: document.getElementById("lon").value,
+    magnitude: document.getElementById("magnitude").value,
     comment: document.getElementById("comment").value
   };
 
-  const res = await fetch("/api/add", {
+  await fetch("/api/add", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -105,39 +73,21 @@ document.getElementById("addForm").addEventListener("submit", async e => {
     },
     body: JSON.stringify(record)
   });
-  const json = await res.json();
-  if (json.ok) {
-    loadData();
-  } else {
-    alert("Ошибка сохранения. Возможно, нет авторизации.");
-    window.location.href = "/";
-  }
+
+  loadData();
 });
 
-// Удаление события
 async function deleteEvent(id) {
-  const res = await fetch(`/api/delete/${id}`, {
-    method: "GET",
+  await fetch("/api/delete", {
+    method: "POST",
     headers: {
+      "Content-Type": "application/json",
       "Authorization": "Bearer " + localStorage.getItem("token")
-    }
+    },
+    body: JSON.stringify({ id })
   });
-  const json = await res.json();
-  if (json.ok) {
-    loadData();
-  } else {
-    alert("Ошибка удаления. Возможно, нет авторизации.");
-    window.location.href = "/";
-  }
+  loadData();
 }
 
-// При загрузке страницы
-document.addEventListener("DOMContentLoaded", async () => {
-  if (!localStorage.getItem("token")) {
-    window.location.href = "/";
-    return;
-  }
-  initMap();
-  setCurrentDateTime();
-  await loadData();
-});
+// загрузка при открытии
+loadData();
