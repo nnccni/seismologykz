@@ -2,20 +2,18 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Авторизация</title>
+  <title>Вход в кабинет</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>Вход в кабинет</h1>
-  </header>
-  <main>
-    <form id="loginForm">
-      <label>Логин: <input type="text" id="login"></label><br>
-      <label>Пароль: <input type="password" id="password"></label><br>
-      <button type="submit">Войти</button>
-    </form>
-  </main>
+  <h1>Вход в кабинет</h1>
+  <form id="loginForm">
+    <label>Логин:</label>
+    <input type="text" id="login" value="admin" required>
+    <label>Пароль:</label>
+    <input type="password" id="password" required>
+    <button type="submit">Войти</button>
+  </form>
   <script src="login.js"></script>
 </body>
 </html>
