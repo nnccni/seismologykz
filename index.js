@@ -76,7 +76,6 @@ app.get("/api/delete/:id", auth, (req, res) => {
   res.json({ ok: true });
 });
 
-// маршрут для публичной страницы
 app.get("/public", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "public.html"));
 });
