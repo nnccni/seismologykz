@@ -3,13 +3,23 @@ let markersLayer;
 
 // Инициализация карты
 function initMap() {
-  map = L.map("map").setView([48.0, 67.0], 5);
+  map = L.map("map");
+
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap"
   }).addTo(map);
+
   markersLayer = L.layerGroup().addTo(map);
+
+  // границы Казахстана
+  const kazakhstanBounds = [
+    [40.0, 55.0], // юго-запад
+    [55.0, 87.0]  // северо-восток
+  ];
+  map.fitBounds(kazakhstanBounds);
 }
+
 
 // Обновление карты
 function updateMap(data) {
