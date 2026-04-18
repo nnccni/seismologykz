@@ -76,3 +76,18 @@ th, td {
 tr:nth-child(even) {
   background: #f9f9f9;
 }
+main {
+  display: flex;
+  justify-content: center; /* по горизонтали */
+  align-items: center;     /* по вертикали */
+  height: calc(100vh - 80px); /* высота экрана минус шапка */
+}
+
+#loginForm {
+  background: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  width: 300px;
+  text-align: center;
+}
