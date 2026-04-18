@@ -1,4 +1,12 @@
 [
-  { "login": "admin", "password": "12345" },
-  { "login": "operator", "password": "op123" }
+  {
+    "username": "admin",
+    "password": "admin123",
+    "role": "operator"
+  },
+  {
+    "username": "viewer",
+    "password": "viewer123",
+    "role": "public"
+  }
 ]
