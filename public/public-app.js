@@ -1,18 +1,17 @@
 function renderMap(data) {
   const map = L.map("map").setView([43.25, 76.9], 5);
-
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
 
   data.forEach(r => {
     if (r.lat && r.lon) {
       L.circleMarker([Number(r.lat), Number(r.lon)], {
         radius: 8,
-        color: "red",
-        fillColor: "red",
-        fillOpacity: 0.8
+        color: "blue",
+        fillColor: "blue",
+        fillOpacity: 0.7
       })
       .addTo(map)
-      .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}`);
+      .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}<br>${r.comment || ""}`);
     }
   });
 }
@@ -26,6 +25,7 @@ function renderTable(data) {
       <th>Широта</th>
       <th>Долгота</th>
       <th>Магнитуда</th>
+      <th>Комментарий</th>
     </tr>
   `;
   data.forEach(r => {
@@ -36,16 +36,18 @@ function renderTable(data) {
         <td>${r.lat || ""}</td>
         <td>${r.lon || ""}</td>
         <td>${r.magnitude || ""}</td>
+        <td>${r.comment || ""}</td>
       </tr>
     `;
   });
   table.innerHTML = html;
 }
 
-fetch("/api/earthquakes")
-  .then(r => r.json())
-  .then(json => {
-    renderMap(json);
-    renderTable(json);
-  })
-  .catch(err => console.error("Ошибка загрузки данных:", err));
+async function loadData() {
+  const res = await fetch("/api/earthquakes");
+  const data = await res.json();
+  renderMap(data);
+  renderTable(data);
+}
+
+loadData();
