@@ -1,4 +1,3 @@
-// проверка токена при загрузке кабинета
 if (!localStorage.getItem("token")) {
   window.location.href = "/";
 }
@@ -7,7 +6,7 @@ let map;
 let markersLayer;
 
 function initMap() {
-  map = L.map("map").setView([48.0, 67.0], 6); // центр Казахстана
+  map = L.map("map").setView([48.0, 67.0], 6);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap"
@@ -74,11 +73,10 @@ async function loadData() {
   });
   let data = await res.json();
 
-  // сортировка по дате/времени
   data.sort((a, b) => {
     const dateA = new Date(`${a.date}T${a.time}`);
     const dateB = new Date(`${b.date}T${b.time}`);
-    return dateB - dateA; // свежие выше
+    return dateB - dateA;
   });
 
   renderMap(data);
@@ -100,18 +98,16 @@ document.getElementById("eventForm").addEventListener("submit", async e => {
   const editId = document.getElementById("eventForm").dataset.editId;
 
   if (editId) {
-    // обновление
     await fetch("/api/update", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + localStorage.getItem("token")
       },
-      body: JSON.stringify({ id: editId, ...record })
+      body: JSON.stringify({ id: Number(editId), ...record })
     });
     delete document.getElementById("eventForm").dataset.editId;
   } else {
-    // добавление
     await fetch("/api/add", {
       method: "POST",
       headers: {
@@ -134,7 +130,7 @@ async function deleteEvent(id) {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + localStorage.getItem("token")
     },
-    body: JSON.stringify({ id })
+    body: JSON.stringify({ id: Number(id) })
   });
   loadData();
 }
@@ -145,7 +141,7 @@ function editEvent(id) {
   })
   .then(res => res.json())
   .then(data => {
-    const event = data.find(r => r.id === id);
+    const event = data.find(r => Number(r.id) === Number(id));
     if (event) {
       document.getElementById("date").value = event.date;
       document.getElementById("time").value = event.time;
@@ -153,20 +149,16 @@ function editEvent(id) {
       document.getElementById("lon").value = event.lon;
       document.getElementById("magnitude").value = event.magnitude;
       document.getElementById("comment").value = event.comment;
-
-      // сохранить id редактируемого события
       document.getElementById("eventForm").dataset.editId = id;
     }
   });
 }
 
-// кнопка выхода
 document.getElementById("logout").addEventListener("click", () => {
   localStorage.removeItem("token");
   window.location.href = "/";
 });
 
-// кнопка скачать журнал
 document.getElementById("downloadLog").addEventListener("click", async () => {
   const res = await fetch("/api/earthquakes", {
     headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
@@ -184,7 +176,6 @@ document.getElementById("downloadLog").addEventListener("click", async () => {
   URL.revokeObjectURL(url);
 });
 
-// инициализация
 initMap();
 setDefaultDateTime();
 loadData();
