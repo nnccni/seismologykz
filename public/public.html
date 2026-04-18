@@ -2,16 +2,40 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Сейсмические события</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Публичная карта</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    .public-wrapper {
+      max-width: 1200px;   /* ширина блока как у основного контента */
+      margin: 0 auto;
+      padding: 20px 0;
+    }
+    #map {
+      height: 700px;       /* увеличенная высота карты */
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #events {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    #events th, #events td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+    #events th {
+      background: #f5f5f5;
+    }
+  </style>
 </head>
 <body>
-  <h1>Сейсмические события</h1>
-
-  <div id="map" style="height:600px; margin:20px;"></div>
-
-  <table id="events"></table>
+  <div class="public-wrapper">
+    <h2>Сейсмические события</h2>
+    <div id="map"></div>
+    <table id="events"></table>
+  </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="public-app.js"></script>
