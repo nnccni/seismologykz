@@ -1,3 +1,26 @@
+import express from "express";
+import bodyParser from "body-parser";
+import pg from "pg";
+import cors from "cors";
+
+const app = express();
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+app.use(cors());
+app.use(bodyParser.json());
+app.use(express.static("public"));
+
+// простая авторизация по токену
+function auth(req, res, next) {
+  const token = req.headers["authorization"]?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Нет токена" });
+  // здесь можно добавить проверку токена
+  next();
+}
+
 // получить все события в хронологическом порядке
 app.get("/api/earthquakes", async (req, res) => {
   const result = await pool.query(
@@ -31,4 +54,10 @@ app.post("/api/update", auth, async (req, res) => {
     [Number(id), date, time, lat, lon, magnitude, comment]
   );
   res.json({ ok: true });
+});
+
+// запуск сервера
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Сервер запущен на порту ${PORT}`);
 });
