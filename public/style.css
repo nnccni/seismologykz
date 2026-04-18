@@ -30,3 +30,37 @@ th, td {
   padding: 8px;
   text-align: center;
 }
+.top {
+  display: flex;
+  justify-content: space-between;
+  height: 400px;
+}
+
+.form {
+  width: 45%;
+  padding: 10px;
+  background: #f9f9f9;
+}
+
+#map {
+  width: 45%;
+  height: 100%;
+}
+
+.bottom {
+  margin-top: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table, th, td {
+  border: 1px solid #ccc;
+}
+
+th, td {
+  padding: 8px;
+  text-align: center;
+}
