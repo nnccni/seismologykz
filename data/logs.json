@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "timestamp": "2026-04-18T21:00:00Z",
+    "action": "server_start",
+    "message": "Сервер запущен на порту 3000"
+  },
+  {
+    "timestamp": "2026-04-18T21:05:00Z",
+    "action": "auth_attempt",
+    "user": "admin",
+    "result": "success"
+  },
+  {
+    "timestamp": "2026-04-18T21:10:00Z",
+    "action": "add_event",
+    "event_id": 1713450000000,
+    "result": "success"
+  }
+]
