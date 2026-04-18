@@ -46,7 +46,7 @@ function renderTable(data) {
       <th>Долгота</th>
       <th>Магнитуда</th>
       <th>Комментарий</th>
-      <th>Удалить</th>
+      <th>Действия</th>
     </tr>
   `;
   data.forEach(r => {
@@ -58,7 +58,10 @@ function renderTable(data) {
         <td>${r.lon || ""}</td>
         <td>${r.magnitude || ""}</td>
         <td>${r.comment || ""}</td>
-        <td><button onclick="deleteEvent(${r.id})">X</button></td>
+        <td>
+          <button onclick="editEvent(${r.id})">✎</button>
+          <button onclick="deleteEvent(${r.id})">X</button>
+        </td>
       </tr>
     `;
   });
@@ -84,6 +87,7 @@ async function loadData() {
 
 document.getElementById("eventForm").addEventListener("submit", async e => {
   e.preventDefault();
+
   const record = {
     date: document.getElementById("date").value,
     time: document.getElementById("time").value,
@@ -93,14 +97,30 @@ document.getElementById("eventForm").addEventListener("submit", async e => {
     comment: document.getElementById("comment").value
   };
 
-  await fetch("/api/add", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + localStorage.getItem("token")
-    },
-    body: JSON.stringify(record)
-  });
+  const editId = document.getElementById("eventForm").dataset.editId;
+
+  if (editId) {
+    // обновление
+    await fetch("/api/update", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      },
+      body: JSON.stringify({ id: editId, ...record })
+    });
+    delete document.getElementById("eventForm").dataset.editId;
+  } else {
+    // добавление
+    await fetch("/api/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + localStorage.getItem("token")
+      },
+      body: JSON.stringify(record)
+    });
+  }
 
   document.getElementById("eventForm").reset();
   setDefaultDateTime();
@@ -117,6 +137,27 @@ async function deleteEvent(id) {
     body: JSON.stringify({ id })
   });
   loadData();
+}
+
+function editEvent(id) {
+  fetch("/api/earthquakes", {
+    headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
+  })
+  .then(res => res.json())
+  .then(data => {
+    const event = data.find(r => r.id === id);
+    if (event) {
+      document.getElementById("date").value = event.date;
+      document.getElementById("time").value = event.time;
+      document.getElementById("lat").value = event.lat;
+      document.getElementById("lon").value = event.lon;
+      document.getElementById("magnitude").value = event.magnitude;
+      document.getElementById("comment").value = event.comment;
+
+      // сохранить id редактируемого события
+      document.getElementById("eventForm").dataset.editId = id;
+    }
+  });
 }
 
 // кнопка выхода
