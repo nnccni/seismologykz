@@ -21,7 +21,6 @@ function write(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-// при старте восстанавливаем earthquakes.json из seed
 function ensureData() {
   if (!fs.existsSync(dataFile)) {
     if (fs.existsSync(seedFile)) {
@@ -37,14 +36,26 @@ ensureData();
 // middleware для проверки токена
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.sendFile(path.join(process.cwd(), "public", "login.html"));
+  if (!token) return res.redirect("/login.html");
   try {
     jwt.verify(token, SECRET);
     next();
   } catch {
-    return res.sendFile(path.join(process.cwd(), "public", "login.html"));
+    return res.redirect("/login.html");
   }
 }
+
+// маршрут для логина
+app.post("/auth", (req, res) => {
+  const { username, password } = req.body;
+  // простая проверка (можно заменить на базу)
+  if (username === "admin" && password === "admin123") {
+    const token = jwt.sign({ user: username }, SECRET, { expiresIn: "1h" });
+    res.json({ ok: true, token });
+  } else {
+    res.status(401).json({ ok: false, error: "Неверный логин или пароль" });
+  }
+});
 
 // корень — кабинет оператора, только после авторизации
 app.get("/", auth, (req, res) => {
@@ -90,8 +101,7 @@ app.post("/api/delete", auth, (req, res) => {
   res.json({ ok: true });
 });
 
-// запуск сервера
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
 });
