@@ -59,12 +59,12 @@ app.post("/auth", (req, res) => {
 
 // кабинет всегда отдаётся по корню
 app.get("/", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "list.html"));
+  res.sendFile(path.join(process.cwd(), "public", "list.html"));
 });
 
 // публичная часть
 app.get("/public", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public.html"));
+  res.sendFile(path.join(process.cwd(), "public", "public.html"));
 });
 
 // API: получить все события
