@@ -13,7 +13,6 @@ const SECRET = "supersecretjwtkey123";
 const dataFile = path.join(process.cwd(), "data", "earthquakes.json");
 const seedFile = path.join(process.cwd(), "data", "seed-earthquakes.json");
 
-// вспомогательные функции
 function read(file) {
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }
@@ -21,7 +20,6 @@ function write(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-// восстановление данных при старте
 function ensureData() {
   if (!fs.existsSync(dataFile)) {
     if (fs.existsSync(seedFile)) {
@@ -34,7 +32,6 @@ function ensureData() {
 }
 ensureData();
 
-// middleware для API
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ ok: false, error: "Нет токена" });
@@ -46,7 +43,6 @@ function auth(req, res, next) {
   }
 }
 
-// маршрут для логина
 app.post("/auth", (req, res) => {
   const { username, password } = req.body;
   if (username === "admin" && password === "admin123") {
@@ -57,29 +53,22 @@ app.post("/auth", (req, res) => {
   }
 });
 
-// кабинет — только после авторизации
 app.get("/", (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.sendFile(path.join(process.cwd(), "public", "login.html"));
-  try {
-    jwt.verify(token, SECRET);
-    res.sendFile(path.join(process.cwd(), "public", "list.html"));
-  } catch {
-    res.sendFile(path.join(process.cwd(), "public", "login.html"));
-  }
+  res.sendFile(path.join(process.cwd(), "public", "login.html"));
 });
 
-// публичная часть
+app.get("/cabinet", (req, res) => {
+  res.sendFile(path.join(process.cwd(), "public", "list.html"));
+});
+
 app.get("/public", (req, res) => {
   res.sendFile(path.join(process.cwd(), "public", "public.html"));
 });
 
-// API: получить все события
 app.get("/api/earthquakes", (req, res) => {
   res.json(read(dataFile));
 });
 
-// API: добавить событие (только авторизованные)
 app.post("/api/add", auth, (req, res) => {
   const data = read(dataFile);
   const record = { id: Date.now(), ...req.body };
@@ -96,7 +85,6 @@ app.post("/api/add", auth, (req, res) => {
   res.json({ ok: true, record });
 });
 
-// API: удалить событие (только авторизованные)
 app.post("/api/delete", auth, (req, res) => {
   const { id } = req.body;
   let data = read(dataFile).filter(r => r.id !== id);
