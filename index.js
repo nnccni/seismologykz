@@ -21,6 +21,7 @@ function write(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
+// восстановление данных при старте
 function ensureData() {
   if (!fs.existsSync(dataFile)) {
     if (fs.existsSync(seedFile)) {
@@ -33,23 +34,22 @@ function ensureData() {
 }
 ensureData();
 
-// middleware для проверки токена
+// middleware для API
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.redirect("/login.html");
+  if (!token) return res.status(401).json({ ok: false, error: "Нет токена" });
   try {
     jwt.verify(token, SECRET);
     next();
   } catch {
-    return res.redirect("/login.html");
+    return res.status(401).json({ ok: false, error: "Неверный токен" });
   }
 }
 
 // маршрут для логина
 app.post("/auth", (req, res) => {
   const { username, password } = req.body;
-  // простая проверка (можно заменить на базу)
-  if (username === "admin" && password === "12345") {
+  if (username === "admin" && password === "admin123") {
     const token = jwt.sign({ user: username }, SECRET, { expiresIn: "1h" });
     res.json({ ok: true, token });
   } else {
@@ -57,12 +57,12 @@ app.post("/auth", (req, res) => {
   }
 });
 
-// корень — кабинет оператора, только после авторизации
-app.get("/", auth, (req, res) => {
+// кабинет всегда отдаётся по корню
+app.get("/", (req, res) => {
   res.sendFile(path.join(process.cwd(), "list.html"));
 });
 
-// публичная часть без авторизации
+// публичная часть
 app.get("/public", (req, res) => {
   res.sendFile(path.join(process.cwd(), "public.html"));
 });
