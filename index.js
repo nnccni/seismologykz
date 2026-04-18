@@ -57,7 +57,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(process.cwd(), "public", "login.html"));
 });
 
-app.get("/cabinet", (req, res) => {
+// кабинет доступен только после авторизации
+app.get("/cabinet", auth, (req, res) => {
   res.sendFile(path.join(process.cwd(), "public", "list.html"));
 });
 
