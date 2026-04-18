@@ -1,90 +1,77 @@
-import express from "express";
-import fs from "fs";
-import path from "path";
-import cors from "cors";
-import jwt from "jsonwebtoken";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const bodyParser = require("body-parser");
 
 const app = express();
-const SECRET = "supersecretjwtkey123";
-
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const dataFile = path.join(__dirname, "data", "earthquakes.json");
-const usersFile = path.join(__dirname, "data", "users.json");
+const seedFile = path.join(__dirname, "data", "seed-earthquakes.json");
 
-function ensure(file, def) {
-  if (!fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(def, null, 2));
+// вспомогательные функции
+function read(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+function write(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-ensure(dataFile, []);
-ensure(usersFile, [
-  { login: "admin", password: "12345" },
-  { login: "operator", password: "op123" }
-]);
-
-const read = f => JSON.parse(fs.readFileSync(f));
-const write = (f, d) => fs.writeFileSync(f, JSON.stringify(d, null, 2));
-
-function auth(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ ok: false });
-  try {
-    req.user = jwt.verify(token, SECRET);
-    next();
-  } catch {
-    res.status(401).json({ ok: false });
+// при старте восстанавливаем earthquakes.json из seed
+function ensureData() {
+  if (!fs.existsSync(dataFile)) {
+    if (fs.existsSync(seedFile)) {
+      fs.copyFileSync(seedFile, dataFile);
+    } else {
+      fs.writeFileSync(seedFile, JSON.stringify([], null, 2));
+      fs.writeFileSync(dataFile, JSON.stringify([], null, 2));
+    }
   }
 }
+ensureData();
 
-app.post("/auth", (req, res) => {
-  const { login, password } = req.body;
-  const users = read(usersFile);
-  const user = users.find(u => u.login === login && u.password === password);
-  if (!user) return res.json({ ok: false });
-  const token = jwt.sign({ login }, SECRET, { expiresIn: "7d" });
-  res.json({ ok: true, token });
-});
-
+// API: получить все события
 app.get("/api/earthquakes", (req, res) => {
-  res.json({ ok: true, data: read(dataFile) });
+  const data = read(dataFile);
+  res.json(data);
 });
 
-app.post("/api/add", auth, (req, res) => {
+// API: добавить событие
+app.post("/api/add", (req, res) => {
   const data = read(dataFile);
   const record = { id: Date.now(), ...req.body };
   data.push(record);
   write(dataFile, data);
+
+  // параллельно обновляем seed-earthquakes.json
+  let seedData = [];
+  if (fs.existsSync(seedFile)) {
+    seedData = read(seedFile);
+  }
+  seedData.push(record);
+  write(seedFile, seedData);
+
   res.json({ ok: true, record });
 });
 
-app.get("/api/delete/:id", auth, (req, res) => {
+// API: удалить событие
+app.post("/api/delete", (req, res) => {
+  const { id } = req.body;
   let data = read(dataFile);
-  data = data.filter(r => r.id != req.params.id);
+  data = data.filter(r => r.id !== id);
   write(dataFile, data);
+
+  // удаляем и из seed
+  let seedData = read(seedFile);
+  seedData = seedData.filter(r => r.id !== id);
+  write(seedFile, seedData);
+
   res.json({ ok: true });
 });
 
-// корень — форма авторизации
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+// запуск сервера
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
 });
-
-// кабинет
-app.get("/list", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "list.html"));
-});
-
-// публичная часть
-app.get("/public", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "public.html"));
-});
-
-const port = process.env.PORT || 8080;
-app.listen(port, () => console.log("Running on", port));
