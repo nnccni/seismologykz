@@ -58,42 +58,27 @@ app.get("/cabinet", (req, res) => res.sendFile("public/list.html", { root: proce
 app.get("/public", (req, res) => res.sendFile("public/public.html", { root: process.cwd() }));
 
 // получить все события
-// получить все события в хронологическом порядке
 app.get("/api/earthquakes", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM earthquakes ORDER BY date DESC, time DESC"
-app.get("/api/earthquakes", async (req, res) => {
+  const result = await pool.query("SELECT * FROM earthquakes ORDER BY id DESC");
+  res.json(result.rows);
+});
 
 // добавить событие
 app.post("/api/add", auth, async (req, res) => {
   const record = { id: Date.now(), ...req.body };
-  const { date, time, lat, lon, magnitude, comment } = req.body;
   await pool.query(
     "INSERT INTO earthquakes (id, date, time, lat, lon, magnitude, comment) VALUES ($1,$2,$3,$4,$5,$6,$7)",
     [record.id, record.date, record.time, record.lat, record.lon, record.magnitude, record.comment]
-    "INSERT INTO earthquakes (date, time, lat, lon, magnitude, comment) VALUES ($1,$2,$3,$4,$5,$6)",
-    [date, time, lat, lon, magnitude, comment]
   );
   res.json({ ok: true, record });
-  res.json({ ok: true });
 });
 
 // удалить событие
 app.post("/api/delete", auth, async (req, res) => {
   const { id } = req.body;
   await pool.query("DELETE FROM earthquakes WHERE id=$1", [id]);
-  await pool.query("DELETE FROM earthquakes WHERE id=$1", [Number(id)]);
   res.json({ ok: true });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
-// обновить событие
-app.post("/api/update", auth, async (req, res) => {
-  const { id, date, time, lat, lon, magnitude, comment } = req.body;
-  await pool.query(
-    "UPDATE earthquakes SET date=$2, time=$3, lat=$4, lon=$5, magnitude=$6, comment=$7 WHERE id=$1",
-    [Number(id), date, time, lat, lon, magnitude, comment]
-  );
-  res.json({ ok: true });
-});
