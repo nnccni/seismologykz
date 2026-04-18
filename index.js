@@ -76,6 +76,12 @@ app.get("/api/delete/:id", auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// маршрут для корня — кабинет оператора
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "list.html"));
+});
+
+// маршрут для публичной части
 app.get("/public", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "public.html"));
 });
