@@ -1,31 +1,21 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Вход | Сейсмология</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Авторизация</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="login-page">
-  <div class="login-box">
-    <h1>Вход в систему</h1>
-    <form method="POST" action="/auth">
-      <label>Логин</label>
-      <input type="text" name="login" required />
-
-      <label>Пароль</label>
-      <input type="password" name="password" required />
-
+<body>
+  <header>
+    <h1>Вход в кабинет</h1>
+  </header>
+  <main>
+    <form id="loginForm">
+      <label>Логин: <input type="text" id="login"></label><br>
+      <label>Пароль: <input type="password" id="password"></label><br>
       <button type="submit">Войти</button>
     </form>
-
-    <div class="error" id="error"></div>
-  </div>
-
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("error") === "1") {
-      document.getElementById("error").textContent = "Неверный логин или пароль";
-    }
-  </script>
+  </main>
+  <script src="login.js"></script>
 </body>
 </html>
