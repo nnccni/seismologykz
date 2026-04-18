@@ -1,36 +1,36 @@
 import express from "express";
-import fs from "fs";
-import path from "path";
 import bodyParser from "body-parser";
 import jwt from "jsonwebtoken";
+import pkg from "pg";
 
+const { Pool } = pkg;
 const app = express();
 app.use(bodyParser.json());
-app.use(express.static(path.join(process.cwd(), "public")));
+app.use(express.static("public"));
 
 const SECRET = "supersecretjwtkey123";
 
-const dataFile = path.join(process.cwd(), "data", "earthquakes.json");
-const seedFile = path.join(process.cwd(), "data", "seed-earthquakes.json");
+// Railway автоматически задаёт DATABASE_URL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
-function read(file) {
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+// создаём таблицу при старте (если нет)
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS earthquakes (
+      id BIGINT PRIMARY KEY,
+      date TEXT,
+      time TEXT,
+      lat REAL,
+      lon REAL,
+      magnitude REAL,
+      comment TEXT
+    )
+  `);
 }
-function write(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2));
-}
-
-function ensureData() {
-  if (!fs.existsSync(dataFile)) {
-    if (fs.existsSync(seedFile)) {
-      fs.copyFileSync(seedFile, dataFile);
-    } else {
-      fs.writeFileSync(seedFile, JSON.stringify([], null, 2));
-      fs.writeFileSync(dataFile, JSON.stringify([], null, 2));
-    }
-  }
-}
-ensureData();
+initDB();
 
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
@@ -53,51 +53,32 @@ app.post("/auth", (req, res) => {
   }
 });
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "login.html"));
+app.get("/", (req, res) => res.sendFile("public/login.html", { root: process.cwd() }));
+app.get("/cabinet", (req, res) => res.sendFile("public/list.html", { root: process.cwd() }));
+app.get("/public", (req, res) => res.sendFile("public/public.html", { root: process.cwd() }));
+
+// получить все события
+app.get("/api/earthquakes", async (req, res) => {
+  const result = await pool.query("SELECT * FROM earthquakes ORDER BY id DESC");
+  res.json(result.rows);
 });
 
-// кабинет доступен только после авторизации
-app.get("/cabinet", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "list.html"));
-});
-
-app.get("/public", (req, res) => {
-  res.sendFile(path.join(process.cwd(), "public", "public.html"));
-});
-
-app.get("/api/earthquakes", (req, res) => {
-  res.json(read(dataFile));
-});
-
-app.post("/api/add", auth, (req, res) => {
-  const data = read(dataFile);
+// добавить событие
+app.post("/api/add", auth, async (req, res) => {
   const record = { id: Date.now(), ...req.body };
-  data.push(record);
-  write(dataFile, data);
-
-  let seedData = [];
-  if (fs.existsSync(seedFile)) {
-    seedData = read(seedFile);
-  }
-  seedData.push(record);
-  write(seedFile, seedData);
-
+  await pool.query(
+    "INSERT INTO earthquakes (id, date, time, lat, lon, magnitude, comment) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+    [record.id, record.date, record.time, record.lat, record.lon, record.magnitude, record.comment]
+  );
   res.json({ ok: true, record });
 });
 
-app.post("/api/delete", auth, (req, res) => {
+// удалить событие
+app.post("/api/delete", auth, async (req, res) => {
   const { id } = req.body;
-  let data = read(dataFile).filter(r => r.id !== id);
-  write(dataFile, data);
-
-  let seedData = read(seedFile).filter(r => r.id !== id);
-  write(seedFile, seedData);
-
+  await pool.query("DELETE FROM earthquakes WHERE id=$1", [id]);
   res.json({ ok: true });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
