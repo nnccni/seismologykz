@@ -7,8 +7,11 @@ let map;
 let markersLayer;
 
 function initMap() {
-  map = L.map("map").setView([43.25, 76.9], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  map = L.map("map").setView([48.0, 67.0], 6); // центр Казахстана
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
   markersLayer = L.layerGroup().addTo(map);
 }
 
@@ -66,7 +69,15 @@ async function loadData() {
   const res = await fetch("/api/earthquakes", {
     headers: { "Authorization": "Bearer " + localStorage.getItem("token") }
   });
-  const data = await res.json();
+  let data = await res.json();
+
+  // сортировка по дате/времени
+  data.sort((a, b) => {
+    const dateA = new Date(`${a.date}T${a.time}`);
+    const dateB = new Date(`${b.date}T${b.time}`);
+    return dateB - dateA; // свежие выше
+  });
+
   renderMap(data);
   renderTable(data);
 }
@@ -107,6 +118,7 @@ async function deleteEvent(id) {
   });
   loadData();
 }
+
 // кнопка выхода
 document.getElementById("logout").addEventListener("click", () => {
   localStorage.removeItem("token");
