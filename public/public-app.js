@@ -2,9 +2,21 @@ let map;
 let markersLayer;
 
 function initMap() {
-  map = L.map("map").setView([43.25, 76.9], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  map = L.map("map");
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(map);
+
   markersLayer = L.layerGroup().addTo(map);
+
+  // границы Казахстана (примерный прямоугольник)
+  const kazakhstanBounds = [
+    [40.0, 55.0], // юго-запад
+    [55.0, 87.0]  // северо-восток
+  ];
+  map.fitBounds(kazakhstanBounds);
 }
 
 function renderMap(data) {
@@ -13,9 +25,9 @@ function renderMap(data) {
     if (r.lat && r.lon) {
       L.circleMarker([Number(r.lat), Number(r.lon)], {
         radius: 8,
-        color: "blue",
-        fillColor: "blue",
-        fillOpacity: 0.7
+        color: "red",
+        fillColor: "red",
+        fillOpacity: 0.8
       })
       .addTo(markersLayer)
       .bindPopup(`${r.date || ""} ${r.time || ""}<br>M ${r.magnitude || ""}<br>${r.comment || ""}`);
@@ -56,6 +68,9 @@ async function loadData() {
   renderMap(data);
   renderTable(data);
 }
+
+// автообновление каждые 30 секунд
+setInterval(loadData, 30000);
 
 // инициализация
 initMap();
