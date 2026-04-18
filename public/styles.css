@@ -7,7 +7,7 @@ body {
 }
 
 header {
-  background: #0a2a43; /* фирменный тёмно-синий */
+  background: #0a2a43;
   color: white;
   padding: 15px;
   text-align: center;
@@ -17,16 +17,14 @@ h1, h2 {
   margin: 10px 0;
 }
 
-/* контейнер для формы и карты */
+/* верхний блок: форма + карта */
 .top {
   display: flex;
-  justify-content: space-between;
   gap: 20px;
   padding: 20px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
-/* форма */
 .form {
   flex: 1;
   max-width: 400px;
@@ -36,7 +34,6 @@ h1, h2 {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* карта */
 #map {
   flex: 2;
   min-height: 400px;
@@ -46,7 +43,7 @@ h1, h2 {
 
 /* кнопки */
 button {
-  background: #00a6a6; /* фирменный бирюзовый */
+  background: #00a6a6;
   color: #fff;
   border: none;
   padding: 10px 15px;
@@ -58,17 +55,22 @@ button:hover {
   background: #008080;
 }
 
-/* таблица */
+/* нижний блок: таблица */
 .bottom {
   margin-top: 20px;
   padding: 20px;
 }
 
+.table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 table, th, td {
@@ -82,21 +84,4 @@ th, td {
 
 tr:nth-child(even) {
   background: #f9f9f9;
-}
-
-/* форма авторизации по центру */
-main {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: calc(100vh - 80px); /* минус высота хедера */
-}
-
-#loginForm {
-  background: #fff;
-  padding: 20px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  width: 300px;
-  text-align: center;
 }
