@@ -13,7 +13,7 @@ function setDefaultDateTime() {
 }
 
 function renderMap(data) {
-  markersLayer.clearLayers(); // очистка старых маркеров
+  markersLayer.clearLayers();
   data.forEach(r => {
     if (r.lat && r.lon) {
       L.circleMarker([Number(r.lat), Number(r.lon)], {
@@ -86,7 +86,11 @@ document.getElementById("eventForm").addEventListener("submit", async e => {
     body: JSON.stringify(record)
   });
 
-  loadData(); // обновляем интерфейс сразу
+  // сброс формы и установка дефолтных значений
+  document.getElementById("eventForm").reset();
+  setDefaultDateTime();
+
+  loadData();
 });
 
 async function deleteEvent(id) {
@@ -98,7 +102,7 @@ async function deleteEvent(id) {
     },
     body: JSON.stringify({ id })
   });
-  loadData(); // обновляем интерфейс сразу
+  loadData();
 }
 
 // инициализация
