@@ -3,7 +3,7 @@ let markersLayer;
 
 // Инициализация карты
 function initMap() {
-  map = L.map("map").setView([43.25, 76.9], 5);
+  map = L.map("map").setView([48.0, 67.0], 6);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap"
