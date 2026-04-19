@@ -39,12 +39,12 @@ function renderTable(data) {
   const table = document.getElementById("events");
   let html = `
     <tr>
-      <th>Дата</th>
-      <th>Время</th>
-      <th>Широта</th>
-      <th>Долгота</th>
-      <th>Магнитуда</th>
-      <th>Комментарий</th>
+      <th>date</th>
+      <th>time</th>
+      <th>lat</th>
+      <th>lon</th>
+      <th>mb</th>
+      <th>region name</th>
     </tr>
   `;
   data.forEach(r => {
