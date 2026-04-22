@@ -43,7 +43,7 @@ function renderTable(data) {
       <th>time</th>
       <th>lat</th>
       <th>lon</th>
-      <th>mb</th>
+      <th>Mpv</th>
       <th>region name</th>
     </tr>
   `;
